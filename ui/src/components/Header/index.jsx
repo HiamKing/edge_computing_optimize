@@ -10,7 +10,7 @@ export default function Header() {
                 <div className="header">
                     <a className="header-link" href={routingPaths.home}>
                         <img src={logo} alt="homepage" />
-                        <p className="logo-text">Edge Computing Optimization</p>
+                        <div className="logo-text">Edge Computing Optimization</div>
                     </a>
                     <div className="header-btn">
                         <NavLink

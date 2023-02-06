@@ -1,0 +1,34 @@
+.detail-algorithm-view {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    width: 100%;
+    padding: 1rem;
+}
+
+.h1-title-text {
+    font-weight: 550;
+    font-size: 35px;
+    margin-bottom: 2rem;
+}
+
+.h2-title-text {
+    font-weight: 550;
+}
+
+.component {
+    margin-left: 2rem;
+}
+
+.algo-dropdown {
+    flex-basis: 25%;
+}
+
+.param-text {
+    flex-basis: 15%;
+}
+
+.algo-input {
+    flex-basis: 40%;
+    height: 2rem;
+}
