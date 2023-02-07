@@ -3,7 +3,7 @@ const algorithms = {
         params: ['Time steps', 'Partition coefficient', 'Verbose', 'Random seed']
     },
     'PPO2': {
-        params: ['Time steps', 'Partition coefficient', 'Verbose', 'Random seed']
+        params: ['Time steps', 'Time slots', 'Partition coefficient', 'Verbose', 'Random seed']
     },
     'Random': {
         params: []

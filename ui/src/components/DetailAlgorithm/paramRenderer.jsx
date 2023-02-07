@@ -23,6 +23,29 @@ function TimeStepRenderer({ updateParams }) {
     );
 }
 
+function TimeSlotRenderer({ updateParams }) {
+    const [timeSlots, setTimeSlots] = useState('');
+
+    return (
+        <div className="mt-3 ml-5 d-flex flex-row">
+            <div className="param-text align-self-center mr-4">
+                <div className="align-middle">Time slots</div>
+            </div>
+            <div className="algo-input">
+                <input
+                    className="w-100 h-100 p-1"
+                    value={timeSlots}
+                    placeholder="Enter a time slots"
+                    onChange={(event) => {
+                        setTimeSlots(event.target.value);
+                        updateParams('time_slots', event.target.value);
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
+
 function PcoeffRenderer({ updateParams }) {
     const [pCoeff, setpCoeff] = useState('');
 
@@ -94,6 +117,7 @@ function RSeedRenderer({ updateParams }) {
 
 const paramRendererMp = {
     'Time steps': TimeStepRenderer,
+    'Time slots': TimeSlotRenderer,
     'Partition coefficient': PcoeffRenderer,
     Verbose: VerboseRenderer,
     'Random seed': RSeedRenderer,

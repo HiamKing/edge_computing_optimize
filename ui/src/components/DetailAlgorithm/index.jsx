@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { io } from 'socket.io-client';
 import { algorithms } from './algorithms';
 import DropdownList from 'react-widgets/DropdownList';
 import ParamRenderer from './paramRenderer';
@@ -6,6 +7,9 @@ import ResultRenderer from './resultRenderer';
 import APIS from '../../services/common';
 import 'react-widgets/scss/styles.scss';
 import './styles.scss';
+
+const SOCKET_SERVER = 'http://127.0.0.1:5000/'
+let socket;
 
 function useAlgoParams(initParams) {
     const [params, setParams] = useState(initParams);
@@ -24,7 +28,10 @@ function useAlgoResult(initResult) {
 
     function updateResult(key, value) {
         const newResult = result;
-        newResult[key] = value;
+        if (!(key in newResult)) {
+            newResult[key] = []
+        }
+        newResult[key].push(value)
         setResult(newResult);
     }
 
@@ -37,17 +44,30 @@ export default function DetailAlgorithm() {
     const [algoResult, updateResult] = useAlgoResult({});
     const [isRunning, setIsRunning] = useState(false);
 
+    // useEffect(() => {
+    //     // when component unmounts, disconnect
+    //     return (() => {
+    //         if (socket) {
+    //             socket.disconnect()
+    //         }
+    //     })
+    // }, [isRunning])
+
     const runAlgorithm = () => {
         setIsRunning(true);
-        APIS.runAlgorithm(algorithmName, algoParams).then((res) => {
-            updateResult('areaGraph', res.data.area_graph);
-            updateResult('avgTotal', res.data.avg_total);
-            updateResult('avgDelay', res.data.avg_delay);
-            updateResult('avgEnergy', res.data.avg_energy);
-            updateResult('avgBattery', res.data.avg_battery);
-            updateResult('avgBackup', res.data.avg_backup);
-            setIsRunning(false);
+        socket = io(SOCKET_SERVER);
+        socket.on(algorithmName, (data) => {
+            updateResult('avgTotal', parseFloat(data['avg_total']));
+            updateResult('avgDelay', parseFloat(data['avg_delay']));
+            updateResult('avgEnergy', parseFloat(data['avg_energy']));
+            updateResult('avgBattery', parseFloat(data['avg_battery']));
+            updateResult('avgBackup', parseFloat(data['avg_backup']));
+            if (data['end_of_data'] === 'True') {
+                socket.disconnect()
+                setIsRunning(false);
+            }
         });
+        APIS.runAlgorithm(algorithmName, algoParams);
     };
 
     return (
@@ -87,7 +107,7 @@ export default function DetailAlgorithm() {
                         <div className="d-flex justify-content-center mt-5">
                             <button
                                 type="button"
-                                class="btn btn-primary"
+                                className="btn btn-primary"
                                 disabled={isRunning}
                                 onClick={(e) => runAlgorithm()}
                             >
@@ -99,7 +119,7 @@ export default function DetailAlgorithm() {
                     <></>
                 )}
             </div>
-            {!isRunning && Object.keys(algoResult).length !== 0 ? (
+            {Object.keys(algoResult).length !== 0 ? (
                 <div className="detail-algorithm-view">
                     <p className="h1-title-text text-center">
                         Running {algorithmName} algorithm result
