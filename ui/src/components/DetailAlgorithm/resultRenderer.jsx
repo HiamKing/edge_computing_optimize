@@ -1,10 +1,7 @@
 import Plot from 'react-plotly.js';
+import _ from 'lodash';
 
 function AreaGraphRenderer({ delayData, bakData, batteryData }) {
-    console.log([Array.from(Array(delayData.length).keys())])
-    console.log(delayData)
-    console.log(bakData)
-    console.log(batteryData)
     return (
         <div className="component">
             <div className="align-self-center mr-5">
@@ -15,21 +12,21 @@ function AreaGraphRenderer({ delayData, bakData, batteryData }) {
             <Plot
                 data={[
                     {
-                        x: [Array.from(Array(delayData.length).keys())],
-                        y: [Array.from(Array(delayData.length).keys())],
+                        x: Array.from(Array(delayData.length).keys()),
+                        y: delayData,
                         name: 'Delay Cost',
                         stackgroup: 'one'
                     },
                     {
-                        x: [Array.from(Array(bakData.length).keys())],
-                        y: [Array.from(Array(bakData.length).keys())],
+                        x: Array.from(Array(bakData.length).keys()),
+                        y: bakData,
                         name: 'Backup Cost',
                         stackgroup: 'one'
 
                     },
                     {
-                        x: [Array.from(Array(batteryData.length).keys())],
-                        y: [Array.from(Array(batteryData.length).keys())],
+                        x: Array.from(Array(batteryData.length).keys()),
+                        y: batteryData,
                         name: 'Battery Cost',
                         stackgroup: 'one'
 
@@ -65,9 +62,9 @@ export default function ResultRenderer({ result }) {
     return (
         <>
             <AreaGraphRenderer
-                delayData={result['avgDelay']}
-                bakData={result['avgBackup']}
-                batteryData={result['avgBattery']}
+                delayData={_.get(result, 'avgDelay', [])}
+                bakData={_.get(result, 'avgBackup', [])}
+                batteryData={_.get(result, 'avgBattery', [])}
             />
         </>
     );

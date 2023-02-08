@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { algorithms } from './algorithms';
 import DropdownList from 'react-widgets/DropdownList';
@@ -8,7 +8,8 @@ import APIS from '../../services/common';
 import 'react-widgets/scss/styles.scss';
 import './styles.scss';
 
-const SOCKET_SERVER = 'http://127.0.0.1:5000/'
+const SOCKET_SERVER = 'http://127.0.0.1:5000/';
+const MAX_RESULT_ATTR_LENGTH = 5
 let socket;
 
 function useAlgoParams(initParams) {
@@ -31,42 +32,40 @@ function useAlgoResult(initResult) {
         if (!(key in newResult)) {
             newResult[key] = []
         }
-        newResult[key].push(value)
+        newResult[key].push(value);
         setResult(newResult);
     }
 
-    return [result, updateResult];
+    return [result, updateResult, setResult];
 }
 
 export default function DetailAlgorithm() {
     const [algorithmName, setAlgorithmName] = useState('');
     const [algoParams, updateParams] = useAlgoParams({});
-    const [algoResult, updateResult] = useAlgoResult({});
+    const [algoResult, updateResult, setResult] = useAlgoResult({});
     const [isRunning, setIsRunning] = useState(false);
 
-    // useEffect(() => {
-    //     // when component unmounts, disconnect
-    //     return (() => {
-    //         if (socket) {
-    //             socket.disconnect()
-    //         }
-    //     })
-    // }, [isRunning])
+    useEffect(() => {
+        if (algoResult !== {}) {
+            socket = io(SOCKET_SERVER);
+            socket.on(algorithmName, (data) => {
+                updateResult('avgTotal', parseFloat(data['avg_total']));
+                updateResult('avgDelay', parseFloat(data['avg_delay']));
+                updateResult('avgEnergy', parseFloat(data['avg_energy']));
+                updateResult('avgBattery', parseFloat(data['avg_battery']));
+                updateResult('avgBackup', parseFloat(data['avg_backup']));
+                if (data['end_of_data'] === 'True') {
+                    socket.disconnect();
+                    setIsRunning(false);
+                }
+            });
+        }
+
+    }, [algoResult])
 
     const runAlgorithm = () => {
         setIsRunning(true);
-        socket = io(SOCKET_SERVER);
-        socket.on(algorithmName, (data) => {
-            updateResult('avgTotal', parseFloat(data['avg_total']));
-            updateResult('avgDelay', parseFloat(data['avg_delay']));
-            updateResult('avgEnergy', parseFloat(data['avg_energy']));
-            updateResult('avgBattery', parseFloat(data['avg_battery']));
-            updateResult('avgBackup', parseFloat(data['avg_backup']));
-            if (data['end_of_data'] === 'True') {
-                socket.disconnect()
-                setIsRunning(false);
-            }
-        });
+        setResult({});
         APIS.runAlgorithm(algorithmName, algoParams);
     };
 
@@ -119,7 +118,7 @@ export default function DetailAlgorithm() {
                     <></>
                 )}
             </div>
-            {Object.keys(algoResult).length !== 0 ? (
+            {Object.keys(algoResult).length === MAX_RESULT_ATTR_LENGTH ? (
                 <div className="detail-algorithm-view">
                     <p className="h1-title-text text-center">
                         Running {algorithmName} algorithm result
