@@ -42,8 +42,8 @@ class OffloadAutoscaleEnv(gym.Env):
         self.server_power_consumption = 150
         # D.Battery model
         # batery capacity B
-        self.batery_capacity = 2000  # Wh    
-        
+        self.batery_capacity = 2000  # Wh
+
         # set the value range for state space parameters (λ, b, h, e)
         # λ
         self.lamda_high = 100  # units/second
@@ -57,7 +57,7 @@ class OffloadAutoscaleEnv(gym.Env):
         # e
         self.e_low = 0
         self.e_high = 2
-        self.time = 0 # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
+        self.time = 0  # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
 
         # define state space & action space:
         r_high = np.array([
@@ -81,11 +81,11 @@ class OffloadAutoscaleEnv(gym.Env):
         self.back_up_cost_coef = 0.15
         # normalized unit depreciation cost ω
         self.normalized_unit_depreciation_cost = 0.01
-        
+
         # coefficent to show the priority of enery cost vs. time delay cost in the reward function
         self.priority_coefficent = p_coeff
-        
-        # environment parameters to track the timesteps in training the agent 
+
+        # environment parameters to track the timesteps in training the agent
         self.time_steps_per_episode = 96
         self.episode = 0
         self.time_step = 0
@@ -143,12 +143,9 @@ class OffloadAutoscaleEnv(gym.Env):
         e = self.state[3]
         if e == 0:
             return np.random.exponential(60) + 100
-            # return np.random.normal(200,100)
         if e == 1:
             return np.random.normal(520, 130)
-            # return np.random.normal(400, 100)
         return np.random.normal(800, 95)
-        # return np.random.normal(600, 100)
 
     # elements of computing power demend d
     # d_op
@@ -164,11 +161,11 @@ class OffloadAutoscaleEnv(gym.Env):
     def cal(self, action):
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
-        if b <= d_op + self.server_power_consumption: #if remaining baterry <= d_op + power consumption of 1 server, the only valid action is [0, 0]
+        if b <= d_op + self.server_power_consumption:  # if remaining baterry <= d_op + power consumption of 1 server, the only valid action is [0, 0]
             return [0, 0]
         else:  # if remaining baterry > d_op, d_op + power consumption of 1 server
             low_bound = 150  # the lower bound for action space
-            high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server,lamda)) #the upper bound for action space
+            high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server, lamda))  # the upper bound for action space
             de_action = low_bound + action * (high_bound - low_bound)  # map the action from the range [0, 1] range to the actual range
             # print('deaction ', de_action)
             return self.get_m_mu(de_action)
@@ -182,7 +179,7 @@ class OffloadAutoscaleEnv(gym.Env):
         lamd, _, h, _ = self.state
         opt_val = math.inf
         ans = [-1, -1]
-        # loop through all possible (m, μ) based on m 
+        # loop through all possible (m, μ) based on m
         for m in range(1, self.max_number_of_server + 1):
             normalized_min_cov = self.lamda_low
             mu = (de_action - self.server_power_consumption * m) * normalized_min_cov / self.server_power_consumption
@@ -197,19 +194,20 @@ class OffloadAutoscaleEnv(gym.Env):
         return self.cost_delay_local_function(m, mu) + self.cost_delay_cloud_function(mu, h, lamda)
 
     def cost_delay_local_function(self, m, mu):
-        if m == 0 and mu == 0: return 0
+        if m == 0 and mu == 0:
+            return 0
         return mu / (m * self.server_service_rate - mu)
 
     def cost_delay_cloud_function(self, mu, h, lamda):
         return (lamda - mu) * h
 
-    def check_constraints(self, m, mu):  # check (m, μ) pair 
+    def check_constraints(self, m, mu):  # check (m, μ) pair
         if mu > self.state[0] or mu < 0:
-            return False  # if local workload is more than total workload or local workload is negative: invalid (m, μ) pair 
+            return False  # if local workload is more than total workload or local workload is negative: invalid (m, μ) pair
         if isinstance(self.mu, complex):
             return False  # not needed
         if m * self.server_service_rate <= mu:
-            return False  # if local workload is more than the service capability that the activated edge servers are able to provide: invalid (m, μ) pair 
+            return False  # if local workload is more than the service capability that the activated edge servers are able to provide: invalid (m, μ) pair
         return True
 
     # reward function
@@ -249,7 +247,6 @@ class OffloadAutoscaleEnv(gym.Env):
         action = float(action)
 
         self.get_time()  # transition to new time
-        state = self.state
         self.time_step += 1
         self.g = self.get_g()  # get the harvested green energy
 
@@ -288,7 +285,7 @@ class OffloadAutoscaleEnv(gym.Env):
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
         low_bound = 150
-        high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server,lamda))
+        high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server, lamda))
         if high_bound < low_bound:
             return 0
         if fixed_action < low_bound:
@@ -309,8 +306,8 @@ class OffloadAutoscaleEnv(gym.Env):
             ans = math.inf
             for m in range(1, self.max_number_of_server):
                 def f(mu, m, h, lamda):
-                    return (1 - self.priority_coefficent) * (mu/(m*self.server_service_rate-mu)+h*(lamda - mu))+ self.priority_coefficent * (self.normalized_unit_depreciation_cost*(self.server_power_consumption*m+self.server_power_consumption/self.lamda_low*mu))
-                res = minimize_scalar(f, bounds=(0, min(lamda,m*self.server_service_rate)), args=((m, h, lamda)), method='bounded')
+                    return (1 - self.priority_coefficent) * (mu/(m*self.server_service_rate-mu)+h*(lamda - mu)) + self.priority_coefficent * (self.normalized_unit_depreciation_cost*(self.server_power_consumption*m+self.server_power_consumption/self.lamda_low*mu))
+                res = minimize_scalar(f, bounds=(0, min(lamda, m*self.server_service_rate)), args=(m, h, lamda), method='bounded')
                 if res.fun < ans:
                     ans = res.fun
                     params = [m, res.x]
