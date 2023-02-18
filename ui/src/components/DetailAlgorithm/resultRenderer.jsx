@@ -2,6 +2,32 @@ import Plot from 'react-plotly.js';
 import _ from 'lodash';
 
 function AreaGraphRenderer({ delayData, bakData, batteryData }) {
+    const layout = {
+        width: 800,
+        height: 600,
+        title: 'Average Costs Graph',
+        xaxis: {
+        title: {
+            text: 'Time slot',
+            font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+            }
+        },
+        },
+        yaxis: {
+        title: {
+            text: 'Average Costs',
+            font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+            }
+        }
+        }
+    }
+
     return (
         <div className="component">
             <div className="align-self-center mr-5">
@@ -10,6 +36,7 @@ function AreaGraphRenderer({ delayData, bakData, batteryData }) {
                 </div>
             </div>
             <Plot
+                layout={layout}
                 data={[
                     {
                         x: Array.from(Array(delayData.length).keys()),
@@ -32,7 +59,6 @@ function AreaGraphRenderer({ delayData, bakData, batteryData }) {
 
                     },
                 ]}
-                layout={{ width: 800, height: 600, title: 'Average Costs Graph' }}
             />
         </div>
     );

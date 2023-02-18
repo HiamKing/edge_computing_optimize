@@ -72,7 +72,7 @@ class PPO2Algorithm:
                 'avg_total': f'{self.avg_rewards[-1]}',
                 'avg_delay': f'{self.avg_rewards_time_list[-1]}',
                 'avg_backup': f'{self.avg_rewards_bak_list[-1]}',
-                'avg_battery': f'{self.rewards_bat_list[-1]}',
+                'avg_battery': f'{self.avg_rewards_bat_list[-1]}',
                 'avg_energy': f'{self.avg_rewards_energy_list[-1]}',
                 'end_of_data': 'False' if i + 1 < self.time_slots else 'True'
             }
