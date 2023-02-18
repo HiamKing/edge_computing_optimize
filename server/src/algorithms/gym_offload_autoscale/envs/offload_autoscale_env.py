@@ -1,6 +1,7 @@
 import gym
 import math
 import numpy as np
+from typing import List
 from gym import spaces
 from gym.utils import seeding
 from scipy.optimize import minimize_scalar
@@ -8,16 +9,22 @@ from scipy.optimize import minimize_scalar
 
 class OffloadAutoscaleEnv(gym.Env):
     # define state space, action space, and other environment parameters
-    def __init__(self, p_coeff):
+    def __init__(
+            self, p_coeff: float, timeslot: float, max_number_of_server: int,
+            server_service_rate: int, d_sta: int, coef_dyn: int,
+            server_power_consumption: int, batery_capacity: int,
+            lamda_high: int, lamda_low: int, h_high: float, h_low: float,
+            e_high: int, e_low: int, time: float, back_up_cost_coef: float,
+            normalized_unit_depreciation_cost: float, time_steps_per_episode: int) -> None:
         # environment parameters from III.SYSTEM MODEL
         # duration of each time-slot
-        self.timeslot = 0.25  # hours, ~15min
+        self.timeslot = timeslot  # hours, ~15min
         # A.Workload model
         # maximum number of activated edge server M
-        self.max_number_of_server = 15
+        self.max_number_of_server = max_number_of_server
         # B.Delay cost model
         # server service rate κ
-        self.server_service_rate = 20  # units/sec
+        self.server_service_rate = server_service_rate  # units/sec
         # C.Power model
         # note: d = d_op + d_com, where
         #       (1) d_op = d_sta + d_dyn :the power demand by the base station
@@ -29,9 +36,9 @@ class OffloadAutoscaleEnv(gym.Env):
         # (1)d_op
         self.d_op = 0
         # (1a)d_sta
-        self.d_sta = 300
+        self.d_sta = d_sta
         # (1b)d_dyn = coef_dyn * λ (this is not specified in the power model, but our own proposal)
-        self.coef_dyn = 0.5
+        self.coef_dyn = coef_dyn
         # (2)d_com
         self.d_com = 0
         self.m = 0
@@ -39,25 +46,25 @@ class OffloadAutoscaleEnv(gym.Env):
         # harvested green energy
         self.g = 0
         # server power consumption (this is from VII.A.Simulation Setup, not mentioned in III.SYSTEM MODEL)
-        self.server_power_consumption = 150
+        self.server_power_consumption = server_power_consumption
         # D.Battery model
         # batery capacity B
-        self.batery_capacity = 2000  # Wh
+        self.batery_capacity = batery_capacity  # Wh
 
         # set the value range for state space parameters (λ, b, h, e)
         # λ
-        self.lamda_high = 100  # units/second
-        self.lamda_low = 10
+        self.lamda_high = lamda_high  # units/second
+        self.lamda_low = lamda_low
         # b
         self.b_high = self.batery_capacity / self.timeslot  # W (b_high = battery capacity B in the paper,but here it can be changed from energy to power (Wh-->W) as stated in III.C.Power Model)
         self.b_low = 0
         # h
-        self.h_high = 0.06  # s/unit
-        self.h_low = 0.02
+        self.h_high = h_high  # s/unit
+        self.h_low = h_low
         # e
-        self.e_low = 0
-        self.e_high = 2
-        self.time = 0  # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
+        self.e_low = e_low
+        self.e_high = e_high
+        self.time = time  # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
 
         # define state space & action space:
         r_high = np.array([
@@ -78,15 +85,15 @@ class OffloadAutoscaleEnv(gym.Env):
         self.state = [0, 0, 0, 0]
 
         # cost coefficient of backup power supply ϕ
-        self.back_up_cost_coef = 0.15
+        self.back_up_cost_coef = back_up_cost_coef
         # normalized unit depreciation cost ω
-        self.normalized_unit_depreciation_cost = 0.01
+        self.normalized_unit_depreciation_cost = normalized_unit_depreciation_cost
 
         # coefficent to show the priority of enery cost vs. time delay cost in the reward function
         self.priority_coefficent = p_coeff
 
         # environment parameters to track the timesteps in training the agent
-        self.time_steps_per_episode = 96
+        self.time_steps_per_episode = time_steps_per_episode
         self.episode = 0
         self.time_step = 0
 
@@ -96,7 +103,7 @@ class OffloadAutoscaleEnv(gym.Env):
         self.reward_bat = 0
 
     # not used, can be ignored
-    def seed(self, seed=None):
+    def seed(self, seed: int = None) -> List[int]:
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
@@ -106,7 +113,7 @@ class OffloadAutoscaleEnv(gym.Env):
         return np.random.uniform(self.lamda_low, self.lamda_high)
 
     # transition function of b
-    def get_b(self):
+    def get_b(self) -> float:
         b = self.state[1]
         # print('\t', end = '')
         if self.d_op > b:
@@ -115,7 +122,7 @@ class OffloadAutoscaleEnv(gym.Env):
         else:
             if self.g >= self.d:
                 # print('recharge batery')
-                return np.minimum(self.b_high, b + self.g - self.d)
+                return min(self.b_high, b + self.g - self.d)
             else:
                 # print('discharge batery')
                 return b + self.g - self.d
@@ -125,7 +132,7 @@ class OffloadAutoscaleEnv(gym.Env):
         return np.random.uniform(self.h_low, self.h_high)
 
     # transition function of e
-    def get_e(self):
+    def get_e(self) -> int:
         if self.time >= 9 and self.time < 15:
             return 2
         if self.time < 6 or self.time >= 18:
@@ -133,7 +140,7 @@ class OffloadAutoscaleEnv(gym.Env):
         return 1
 
     # transition function of time
-    def get_time(self):
+    def get_time(self) -> None:
         self.time += 0.25
         if self.time == 24:
             self.time = 0
@@ -149,16 +156,16 @@ class OffloadAutoscaleEnv(gym.Env):
 
     # elements of computing power demend d
     # d_op
-    def get_dop(self):
+    def get_dop(self) -> int:
         return self.d_sta + self.coef_dyn * self.state[0]
 
     # d_com
-    def get_dcom(self, m, mu):
+    def get_dcom(self, m: int, mu: int) -> float:
         normalized_min_cov = self.lamda_low
         return self.server_power_consumption * m + self.server_power_consumption / normalized_min_cov * mu
 
     # calculate m(t), μ(t) from a(t) (calculate the number of active servers & the local workload from the  normalized action in the range [0,1])
-    def cal(self, action):
+    def cal(self, action) -> List[int]:
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
         if b <= d_op + self.server_power_consumption:  # if remaining baterry <= d_op + power consumption of 1 server, the only valid action is [0, 0]
@@ -175,7 +182,7 @@ class OffloadAutoscaleEnv(gym.Env):
     #                               d_com = μ * α + server_power_consumption * m (formula & coefficient α not specified in the paper, our own proposal)
     #                                                                            (α = server_power_consumption/lamda_low)
     #                               c_delay = μ / (m * κ - μ) + (λ(t) - μ(t))h(t) + 0
-    def get_m_mu(self, de_action):
+    def get_m_mu(self, de_action) -> List[int]:
         lamd, _, h, _ = self.state
         opt_val = math.inf
         ans = [-1, -1]
@@ -190,18 +197,18 @@ class OffloadAutoscaleEnv(gym.Env):
                     opt_val = self.cost_function(m, mu, h, lamd)
         return ans
 
-    def cost_function(self, m, mu, h, lamda):  # calculate the delay cost based on m, μ, h, λ
+    def cost_function(self, m: int, mu: int, h, lamda) -> float:  # calculate the delay cost based on m, μ, h, λ
         return self.cost_delay_local_function(m, mu) + self.cost_delay_cloud_function(mu, h, lamda)
 
-    def cost_delay_local_function(self, m, mu):
+    def cost_delay_local_function(self, m, mu) -> float:
         if m == 0 and mu == 0:
             return 0
         return mu / (m * self.server_service_rate - mu)
 
-    def cost_delay_cloud_function(self, mu, h, lamda):
+    def cost_delay_cloud_function(self, mu, h, lamda) -> float:
         return (lamda - mu) * h
 
-    def check_constraints(self, m, mu):  # check (m, μ) pair
+    def check_constraints(self, m: int, mu: int) -> bool:  # check (m, μ) pair
         if mu > self.state[0] or mu < 0:
             return False  # if local workload is more than total workload or local workload is negative: invalid (m, μ) pair
         if isinstance(self.mu, complex):
@@ -215,7 +222,7 @@ class OffloadAutoscaleEnv(gym.Env):
     #       (1) cost_delay = d_sta + d_dyn :the total delay cost
     #       (2) c_bak: the backup power supply cost
     #       (3) c_bat: the battery depreciation cost
-    def reward_func(self, action):
+    def reward_func(self, action) -> float:
         lamda, b, h, _ = self.state
         cost_delay_wireless = 0
         # calculate m(t) & μ(t) from a(t)
@@ -281,7 +288,7 @@ class OffloadAutoscaleEnv(gym.Env):
 
     # Fixed power agent: (not part of the environment)
     # find the corresponding image of the fixed power action in the mapping to the [0, 1] range
-    def fixed_action_cal(self, fixed_action):
+    def fixed_action_cal(self, fixed_action) -> float:
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
         low_bound = 150
@@ -297,7 +304,7 @@ class OffloadAutoscaleEnv(gym.Env):
 
     # Myopic optimization agent: (not part of the environment)
     # find the corresponding image of the myopic optimization action in the mapping to the [0, 1] range
-    def myopic_action_cal(self):
+    def myopic_action_cal(self) -> float:
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
         if b <= d_op + 150:
