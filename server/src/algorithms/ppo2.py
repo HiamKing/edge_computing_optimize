@@ -11,11 +11,30 @@ import os
 
 
 class PPO2Algorithm:
-    def __init__(self,
-                 time_steps: str, time_slots: str, p_coeff: str,
-                 verbose: str, random_seed: str, socket: SocketIO) -> None:
+    def __init__(self, time_steps: str, p_coeff: str,
+                 timeslot_duration: str, max_number_of_server: str,
+                 server_service_rate: str, d_sta: str, coef_dyn: str,
+                 server_power_consumption: str, batery_capacity: str,
+                 lamda_high: str, lamda_low: str, h_high: str, h_low: str,
+                 back_up_cost_coef: str, normalized_unit_depreciation_cost: str,
+                 time_steps_per_episode: str, verbose: str, random_seed: str,
+                 socket: SocketIO) -> None:
         self.time_steps = int(time_steps)
-        self.time_slots = int(time_slots)
+        self.timeslot_duration = float(timeslot_duration)
+        self.time_steps_per_episode = int(time_steps_per_episode)
+        self.time_slots = int(self.time_steps / self.time_steps_per_episode)
+        self.max_number_of_server = int(max_number_of_server)
+        self.server_service_rate = int(server_service_rate)
+        self.d_sta = int(d_sta)
+        self.coef_dyn = float(coef_dyn)
+        self.server_power_consumption = int(server_power_consumption)
+        self.batery_capacity = int(batery_capacity)
+        self.lamda_high = int(lamda_high)
+        self.lamda_low = int(lamda_low)
+        self.h_high = float(h_high)
+        self.h_low = float(h_low)
+        self.back_up_cost_coef = float(back_up_cost_coef)
+        self.normalized_unit_depreciation_cost = float(normalized_unit_depreciation_cost)
         self.p_coeff = float(p_coeff)
         self.verbose = float(verbose)
         self.random_seed = int(random_seed)
@@ -34,7 +53,14 @@ class PPO2Algorithm:
         self.set_seed()
 
     def init_env(self) -> None:
-        self.env = gym.make('offload-autoscale-v0', p_coeff=self.p_coeff)
+        self.env = gym.make('offload-autoscale-v0', p_coeff=self.p_coeff,
+                            timeslot_duration=self.timeslot_duration, max_number_of_server=self.max_number_of_server,
+                            server_service_rate=self.server_service_rate, d_sta=self.d_sta, coef_dyn=self.coef_dyn,
+                            server_power_consumption=self.server_power_consumption, batery_capacity=self.batery_capacity,
+                            lamda_high=self.lamda_high, lamda_low=self.lamda_low, h_high=self.h_high, h_low=self.h_low,
+                            back_up_cost_coef=self.back_up_cost_coef,
+                            normalized_unit_depreciation_cost=self.normalized_unit_depreciation_cost,
+                            time_steps_per_episode=self.time_steps_per_episode)
         # Optional: PPO2 requires a vectorized environment to run
         # the env is now wrapped automatically when passing it to the
         # constructor
@@ -76,7 +102,7 @@ class PPO2Algorithm:
                 'avg_energy': f'{self.avg_rewards_energy_list[-1]}',
                 'end_of_data': 'False' if i + 1 < self.time_slots else 'True'
             }
-            self.socket.emit("PPO2", data, broadcast=True)
+            self.socket.emit("PPO", data, broadcast=True)
             if dones:
                 self.env.reset()
             # env.render()

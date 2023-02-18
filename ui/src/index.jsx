@@ -5,9 +5,13 @@ import DetailAlgorithm from './components/DetailAlgorithm';
 import Home from './components/Home';
 import Overview from './components/Overview';
 import { routingPaths } from './components/routers';
-import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom';
-import './styles.scss'
-
+import {
+    Route,
+    createBrowserRouter,
+    createRoutesFromElements,
+    RouterProvider,
+} from 'react-router-dom';
+import './styles.scss';
 
 const router = createBrowserRouter(
     createRoutesFromElements(

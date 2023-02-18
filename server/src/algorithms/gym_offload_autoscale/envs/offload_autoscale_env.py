@@ -10,15 +10,15 @@ from scipy.optimize import minimize_scalar
 class OffloadAutoscaleEnv(gym.Env):
     # define state space, action space, and other environment parameters
     def __init__(
-            self, p_coeff: float, timeslot: float, max_number_of_server: int,
+            self, p_coeff: float, timeslot_duration: float, max_number_of_server: int,
             server_service_rate: int, d_sta: int, coef_dyn: int,
             server_power_consumption: int, batery_capacity: int,
             lamda_high: int, lamda_low: int, h_high: float, h_low: float,
-            e_high: int, e_low: int, time: float, back_up_cost_coef: float,
-            normalized_unit_depreciation_cost: float, time_steps_per_episode: int) -> None:
+            back_up_cost_coef: float, normalized_unit_depreciation_cost: float,
+            time_steps_per_episode: int) -> None:
         # environment parameters from III.SYSTEM MODEL
         # duration of each time-slot
-        self.timeslot = timeslot  # hours, ~15min
+        self.timeslot_duration = timeslot_duration  # hours, ~15min
         # A.Workload model
         # maximum number of activated edge server M
         self.max_number_of_server = max_number_of_server
@@ -56,15 +56,15 @@ class OffloadAutoscaleEnv(gym.Env):
         self.lamda_high = lamda_high  # units/second
         self.lamda_low = lamda_low
         # b
-        self.b_high = self.batery_capacity / self.timeslot  # W (b_high = battery capacity B in the paper,but here it can be changed from energy to power (Wh-->W) as stated in III.C.Power Model)
+        self.b_high = self.batery_capacity / self.timeslot_duration  # W (b_high = battery capacity B in the paper,but here it can be changed from energy to power (Wh-->W) as stated in III.C.Power Model)
         self.b_low = 0
         # h
         self.h_high = h_high  # s/unit
         self.h_low = h_low
         # e
-        self.e_low = e_low
-        self.e_high = e_high
-        self.time = time  # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
+        self.e_low = 0
+        self.e_high = 2
+        self.time = 0  # between 0 & 23.75, the time in the day (in unit: hour), used to build transition funtion for e
 
         # define state space & action space:
         r_high = np.array([
@@ -141,9 +141,9 @@ class OffloadAutoscaleEnv(gym.Env):
 
     # transition function of time
     def get_time(self) -> None:
-        self.time += 0.25
-        if self.time == 24:
-            self.time = 0
+        self.time += self.timeslot_duration
+        if self.time >= 24:
+            self.time -= 24
 
     # calculate g from e
     def get_g(self):

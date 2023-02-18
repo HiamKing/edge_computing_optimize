@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { algorithms } from './algorithms';
 import DropdownList from 'react-widgets/DropdownList';
+import { algorithms } from './algorithms';
 import ParamRenderer from './paramRenderer';
 import ResultRenderer from './resultRenderer';
 import APIS from '../../services/common';
@@ -9,8 +9,7 @@ import 'react-widgets/scss/styles.scss';
 import './styles.scss';
 
 const SOCKET_SERVER = 'http://127.0.0.1:5000/';
-const MAX_RESULT_ATTR_LENGTH = 5
-let socket;
+const MAX_RESULT_ATTR_LENGTH = 5;
 
 function useAlgoParams(initParams) {
     const [params, setParams] = useState(initParams);
@@ -30,7 +29,7 @@ function useAlgoResult(initResult) {
     function updateResult(key, value) {
         const newResult = result;
         if (!(key in newResult)) {
-            newResult[key] = []
+            newResult[key] = [];
         }
         newResult[key].push(value);
         setResult(newResult);
@@ -46,8 +45,11 @@ export default function DetailAlgorithm() {
     const [isRunning, setIsRunning] = useState(false);
 
     useEffect(() => {
-        if (algoResult !== {}) {
-            socket = io(SOCKET_SERVER);
+        if (Object.keys(algoResult).length === 0) {
+            const socket = io(SOCKET_SERVER, {
+                reconnection: false,
+                forceNew: true,
+            });
             socket.on(algorithmName, (data) => {
                 updateResult('avgTotal', parseFloat(data['avg_total']));
                 updateResult('avgDelay', parseFloat(data['avg_delay']));
@@ -60,13 +62,14 @@ export default function DetailAlgorithm() {
                 }
             });
         }
-
-    }, [algoResult])
+    }, [algoResult]);
 
     const runAlgorithm = () => {
         setIsRunning(true);
         setResult({});
-        APIS.runAlgorithm(algorithmName, algoParams);
+        APIS.runAlgorithm(algorithmName, algoParams).catch((e) => {
+            setIsRunning(false);
+        });
     };
 
     return (
@@ -95,11 +98,29 @@ export default function DetailAlgorithm() {
                 {algorithmName ? (
                     <div className="component mt-5 mb-2">
                         <div className="h2-title-text align-middle">
-                            Choose {algorithmName} algorithm parameters
+                            Set up {algorithmName} algorithm parameters
+                        </div>
+                        <div className="mt-3 ml-5 h3-title-text align-middle">
+                            Set up environment parameters
                         </div>
                         <div>
                             <ParamRenderer
-                                params={algorithms[algorithmName].params}
+                                params={algorithms[algorithmName].envParams}
+                                paramMapping={
+                                    algorithms[algorithmName].envMapping
+                                }
+                                updateParams={updateParams}
+                            />
+                        </div>
+                        <div className="mt-3 ml-5 h3-title-text align-middle">
+                            Set up algorithm parameters
+                        </div>
+                        <div>
+                            <ParamRenderer
+                                params={algorithms[algorithmName].algoParams}
+                                paramMapping={
+                                    algorithms[algorithmName].algoMapping
+                                }
                                 updateParams={updateParams}
                             />
                         </div>

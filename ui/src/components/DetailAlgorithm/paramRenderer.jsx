@@ -1,21 +1,21 @@
 import { useState } from 'react';
 
-function TimeStepRenderer({ updateParams }) {
-    const [timeSteps, setTimeSteps] = useState('');
+function InputRenderer({ paramLabel, paramMapping, updateParams }) {
+    const [param, setParam] = useState('');
 
     return (
         <div className="mt-3 ml-5 d-flex flex-row">
             <div className="param-text align-self-center mr-4">
-                <div className="align-middle">Time steps</div>
+                <div className="align-middle">{paramLabel}</div>
             </div>
             <div className="algo-input">
                 <input
                     className="w-100 h-100 p-1"
-                    value={timeSteps}
-                    placeholder="Enter a time steps"
+                    value={param}
+                    placeholder="Enter a value"
                     onChange={(event) => {
-                        setTimeSteps(event.target.value);
-                        updateParams('time_steps', event.target.value);
+                        setParam(event.target.value);
+                        updateParams(paramMapping, event.target.value);
                     }}
                 />
             </div>
@@ -23,91 +23,34 @@ function TimeStepRenderer({ updateParams }) {
     );
 }
 
-function TimeSlotRenderer({ updateParams }) {
-    const [timeSlots, setTimeSlots] = useState('');
+function RangeInputRenderer({ paramLabel, paramMapping, updateParams }) {
+    const [lowParam, setLowParam] = useState('');
+    const [highparam, setHighParam] = useState('');
 
     return (
         <div className="mt-3 ml-5 d-flex flex-row">
             <div className="param-text align-self-center mr-4">
-                <div className="align-middle">Time slots</div>
+                <div className="align-middle">{paramLabel}</div>
             </div>
-            <div className="algo-input">
+            <div className="algo-range-input">
                 <input
-                    className="w-100 h-100 p-1"
-                    value={timeSlots}
-                    placeholder="Enter a time slots"
+                    className="w-80 h-100 p-1"
+                    value={lowParam}
+                    placeholder="Enter a low value"
                     onChange={(event) => {
-                        setTimeSlots(event.target.value);
-                        updateParams('time_slots', event.target.value);
+                        setLowParam(event.target.value);
+                        updateParams(paramMapping.low, event.target.value);
                     }}
                 />
             </div>
-        </div>
-    );
-}
-
-function PcoeffRenderer({ updateParams }) {
-    const [pCoeff, setpCoeff] = useState('');
-
-    return (
-        <div className="mt-3 ml-5 d-flex flex-row">
-            <div className="param-text align-self-center mr-4">
-                <div className="align-middle">Partition coefficient</div>
-            </div>
-            <div className="algo-input">
+            <div className="algo-range-input">
                 <input
-                    className="w-100 h-100 p-1"
-                    value={pCoeff}
-                    placeholder="Enter a partition coefficient"
+                    className="w-80 h-100 p-1"
+                    value={highparam}
+                    placeholder="Enter a high value"
                     onChange={(event) => {
-                        setpCoeff(event.target.value);
-                        updateParams('p_coeff', event.target.value);
-                    }}
-                />
-            </div>
-        </div>
-    );
-}
-
-function VerboseRenderer({ updateParams }) {
-    const [verbose, setVerbose] = useState('');
-
-    return (
-        <div className="mt-3 ml-5 d-flex flex-row">
-            <div className="param-text align-self-center mr-4">
-                <div className="align-middle">Verbose</div>
-            </div>
-            <div className="algo-input">
-                <input
-                    className="w-100 h-100 p-1"
-                    value={verbose}
-                    placeholder="Enter a verbose"
-                    onChange={(event) => {
-                        setVerbose(event.target.value);
-                        updateParams('verbose', event.target.value);
-                    }}
-                />
-            </div>
-        </div>
-    );
-}
-
-function RSeedRenderer({ updateParams }) {
-    const [rSeed, setRSeed] = useState('');
-
-    return (
-        <div className="mt-3 ml-5 d-flex flex-row">
-            <div className="param-text align-self-center mr-4">
-                <div className="align-middle">Random seed</div>
-            </div>
-            <div className="algo-input">
-                <input
-                    className="w-100 h-100 p-1"
-                    value={rSeed}
-                    placeholder="Enter a random seed"
-                    onChange={(event) => {
-                        setRSeed(event.target.value);
-                        updateParams('random_seed', event.target.value);
+                        setHighParam(event.target.value);
+                        updateParams(paramMapping.high, event.target.value);
                     }}
                 />
             </div>
@@ -116,20 +59,36 @@ function RSeedRenderer({ updateParams }) {
 }
 
 const paramRendererMp = {
-    'Time steps': TimeStepRenderer,
-    'Time slots': TimeSlotRenderer,
-    'Partition coefficient': PcoeffRenderer,
-    Verbose: VerboseRenderer,
-    'Random seed': RSeedRenderer,
+    'Priority coefficient': InputRenderer,
+    'Number of servers': InputRenderer,
+    'Length each time slot': InputRenderer,
+    'Battery capacity': InputRenderer,
+    'Server service rate': InputRenderer,
+    'Workload (λ)': RangeInputRenderer,
+    'Network congestion (k)': RangeInputRenderer,
+    'Back up power coefficient (φ)': InputRenderer,
+    'Battery depreciation coefficient (ω)': InputRenderer,
+    'Base station static power': InputRenderer,
+    'Dynamic power coefficient': InputRenderer,
+    'Server power consumption': InputRenderer,
+    'Time steps per episode': InputRenderer,
+    'Time steps': InputRenderer,
+    'Verbose': InputRenderer,
+    'Random seed': InputRenderer,
 };
 
-export default function ParamRenderer({ params, updateParams }) {
+export default function ParamRenderer({ params, paramMapping, updateParams }) {
     return (
         <div>
             {params.map((param) => {
                 const ParamRenderer = paramRendererMp[param];
                 return (
-                    <ParamRenderer key={param} updateParams={updateParams} />
+                    <ParamRenderer
+                        key={param}
+                        paramLabel={param}
+                        paramMapping={paramMapping[param]}
+                        updateParams={updateParams}
+                    />
                 );
             })}
         </div>

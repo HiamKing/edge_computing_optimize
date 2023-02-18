@@ -11,7 +11,7 @@ socketio = SocketIO(cors_allowed_origins="*")
 socketio.init_app(app)
 
 ALGORITHM_MP = {
-    'PPO2': PPO2Algorithm
+    'PPO': PPO2Algorithm
 }
 
 
