@@ -72,7 +72,8 @@ const paramRendererMp = {
     'Dynamic power coefficient': InputRenderer,
     'Server power consumption': InputRenderer,
     'Time steps per episode': InputRenderer,
-    'Time steps': InputRenderer,
+    'Training time slots': InputRenderer,
+    'Time slots': InputRenderer,
     'Verbose': InputRenderer,
     'Random seed': InputRenderer,
 };

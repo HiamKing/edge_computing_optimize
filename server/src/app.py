@@ -1,6 +1,7 @@
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from algorithms.ppo2 import PPO2Algorithm
+from algorithms.dqn import DQNAlgorithm
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
@@ -11,7 +12,8 @@ socketio = SocketIO(cors_allowed_origins="*")
 socketio.init_app(app)
 
 ALGORITHM_MP = {
-    'PPO': PPO2Algorithm
+    'PPO': PPO2Algorithm,
+    'DQN': DQNAlgorithm
 }
 
 

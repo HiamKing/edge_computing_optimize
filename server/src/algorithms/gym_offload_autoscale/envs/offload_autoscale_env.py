@@ -122,7 +122,7 @@ class OffloadAutoscaleEnv(gym.Env):
         else:
             if self.g >= self.d:
                 # print('recharge batery')
-                return min(self.b_high, b + self.g - self.d)
+                return np.minimum(self.b_high, b + self.g - self.d)
             else:
                 # print('discharge batery')
                 return b + self.g - self.d
@@ -171,7 +171,7 @@ class OffloadAutoscaleEnv(gym.Env):
         if b <= d_op + self.server_power_consumption:  # if remaining baterry <= d_op + power consumption of 1 server, the only valid action is [0, 0]
             return [0, 0]
         else:  # if remaining baterry > d_op, d_op + power consumption of 1 server
-            low_bound = 150  # the lower bound for action space
+            low_bound = self.server_power_consumption  # the lower bound for action space
             high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server, lamda))  # the upper bound for action space
             de_action = low_bound + action * (high_bound - low_bound)  # map the action from the range [0, 1] range to the actual range
             # print('deaction ', de_action)
@@ -291,7 +291,7 @@ class OffloadAutoscaleEnv(gym.Env):
     def fixed_action_cal(self, fixed_action) -> float:
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
-        low_bound = 150
+        low_bound = self.server_power_consumption
         high_bound = np.minimum(b - d_op, self.get_dcom(self.max_number_of_server, lamda))
         if high_bound < low_bound:
             return 0
@@ -307,14 +307,14 @@ class OffloadAutoscaleEnv(gym.Env):
     def myopic_action_cal(self) -> float:
         lamda, b, h, _ = self.state
         d_op = self.get_dop()
-        if b <= d_op + 150:
+        if b <= d_op + self.server_power_consumption:
             return 0
         else:
             ans = math.inf
             for m in range(1, self.max_number_of_server):
                 def f(mu, m, h, lamda):
                     return (1 - self.priority_coefficent) * (mu/(m*self.server_service_rate-mu)+h*(lamda - mu)) + self.priority_coefficent * (self.normalized_unit_depreciation_cost*(self.server_power_consumption*m+self.server_power_consumption/self.lamda_low*mu))
-                res = minimize_scalar(f, bounds=(0, min(lamda, m*self.server_service_rate)), args=(m, h, lamda), method='bounded')
+                res = minimize_scalar(f, bounds=(0, np.minimum(lamda, m*self.server_service_rate)), args=(m, h, lamda), method='bounded')
                 if res.fun < ans:
                     ans = res.fun
                     params = [m, res.x]
