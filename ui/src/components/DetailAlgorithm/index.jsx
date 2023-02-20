@@ -23,51 +23,27 @@ function useAlgoParams(initParams) {
     return [params, updateParams];
 }
 
-function useAlgoResult(initResult) {
-    const [result, setResult] = useState(initResult);
 
-    function updateResult(key, value) {
-        const newResult = result;
-        if (!(key in newResult)) {
-            newResult[key] = [];
-        }
-        newResult[key].push(value);
-        setResult(newResult);
-    }
-
-    return [result, updateResult, setResult];
-}
-
-export default function DetailAlgorithm() {
+function DetailAlgorithm() {
     const [algorithmName, setAlgorithmName] = useState('');
     const [algoParams, updateParams] = useAlgoParams({});
-    const [algoResult, updateResult, setResult] = useAlgoResult({});
+    const [algoResult, setResult] = useState({});
     const [isRunning, setIsRunning] = useState(false);
-
-    useEffect(() => {
-        if (Object.keys(algoResult).length === 0) {
-            const socket = io(SOCKET_SERVER, {
-                reconnection: false,
-                forceNew: true,
-            });
-            socket.on(algorithmName, (data) => {
-                updateResult('avgTotal', parseFloat(data['avg_total']));
-                updateResult('avgDelay', parseFloat(data['avg_delay']));
-                updateResult('avgEnergy', parseFloat(data['avg_energy']));
-                updateResult('avgBattery', parseFloat(data['avg_battery']));
-                updateResult('avgBackup', parseFloat(data['avg_backup']));
-                if (data['end_of_data'] === 'True') {
-                    socket.disconnect();
-                    setIsRunning(false);
-                }
-            });
-        }
-    }, [algoResult]);
 
     const runAlgorithm = () => {
         setIsRunning(true);
         setResult({});
-        APIS.runAlgorithm(algorithmName, algoParams).catch((e) => {
+        APIS.runAlgorithm(algorithmName, algoParams).then((res) => {
+            setResult({
+                'avgTotal': res.data['avg_total'],
+                'avgDelay': res.data['avg_delay'],
+                'avgEnergy': res.data['avg_energy'],
+                'avgBattery': res.data['avg_battery'],
+                'avgBackup': res.data['avg_backup'],
+            })
+            setIsRunning(false);
+        })
+        .catch((e) => {
             setIsRunning(false);
         });
     };
@@ -91,7 +67,7 @@ export default function DetailAlgorithm() {
                             onChange={(nextAlgorithm) =>
                                 setAlgorithmName(nextAlgorithm)
                             }
-                            data={Object.keys(algorithms)}
+                            data={algorithms.algorithmNames}
                         />
                     </div>
                 </div>
@@ -105,9 +81,9 @@ export default function DetailAlgorithm() {
                         </div>
                         <div>
                             <ParamRenderer
-                                params={algorithms[algorithmName].envParams}
+                                params={algorithms.envParams}
                                 paramMapping={
-                                    algorithms[algorithmName].envMapping
+                                    algorithms.envMapping
                                 }
                                 updateParams={updateParams}
                             />
@@ -117,9 +93,9 @@ export default function DetailAlgorithm() {
                         </div>
                         <div>
                             <ParamRenderer
-                                params={algorithms[algorithmName].algoParams}
+                                params={algorithms.algoParams}
                                 paramMapping={
-                                    algorithms[algorithmName].algoMapping
+                                    algorithms.algoMapping
                                 }
                                 updateParams={updateParams}
                             />
@@ -139,7 +115,7 @@ export default function DetailAlgorithm() {
                     <></>
                 )}
             </div>
-            {Object.keys(algoResult).length === MAX_RESULT_ATTR_LENGTH ? (
+            {Object.keys(algoResult).length > 0 ? (
                 <div className="detail-algorithm-view">
                     <p className="h1-title-text text-center">
                         Running {algorithmName} algorithm result
@@ -154,3 +130,5 @@ export default function DetailAlgorithm() {
         </>
     );
 }
+
+export { useAlgoParams, DetailAlgorithm }

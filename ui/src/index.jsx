@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './components/index';
-import DetailAlgorithm from './components/DetailAlgorithm';
+import { DetailAlgorithm } from './components/DetailAlgorithm';
 import Home from './components/Home';
 import Overview from './components/Overview';
 import { routingPaths } from './components/routers';

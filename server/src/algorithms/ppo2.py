@@ -2,8 +2,6 @@ from stable_baselines import PPO2
 from stable_baselines.common import set_global_seeds
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.common.policies import MlpPolicy
-from flask_socketio import SocketIO
-
 import gym
 from . import gym_offload_autoscale
 import numpy as np
@@ -18,7 +16,7 @@ class PPO2Algorithm:
                  lamda_high: str, lamda_low: str, h_high: str, h_low: str,
                  back_up_cost_coef: str, normalized_unit_depreciation_cost: str,
                  time_steps_per_episode: str, train_time_slots: str, verbose: str,
-                 random_seed: str, socket: SocketIO) -> None:
+                 random_seed: str) -> None:
         self.time_slots = int(time_slots)
         self.timeslot_duration = float(timeslot_duration)
         self.time_steps_per_episode = int(time_steps_per_episode)
@@ -38,7 +36,6 @@ class PPO2Algorithm:
         self.p_coeff = float(p_coeff)
         self.verbose = float(verbose)
         self.random_seed = int(random_seed)
-        self.socket = socket
         self.rewards_list = []
         self.avg_rewards = []
         self.rewards_time_list = []
@@ -75,9 +72,9 @@ class PPO2Algorithm:
         os.environ['PYTHONHASHSEED'] = str(self.random_seed)
         self.model.set_random_seed(self.random_seed)
 
-    def run(self) -> None:
+    def run(self) -> dict:
         obs = self.env.reset()
-        for i in range(self.time_slots):
+        for _ in range(self.time_slots):
             action, _states = self.model.predict(obs, deterministic=True)
             obs, rewards, dones, info = self.env.step(action)
             self.rewards_list.append(1 / rewards)
@@ -93,15 +90,16 @@ class PPO2Algorithm:
             self.avg_rewards_energy_list.append(
                 self.avg_rewards_bak_list[-1] + self.avg_rewards_bat_list[-1])
 
-            data = {
-                'avg_total': f'{self.avg_rewards[-1]}',
-                'avg_delay': f'{self.avg_rewards_time_list[-1]}',
-                'avg_backup': f'{self.avg_rewards_bak_list[-1]}',
-                'avg_battery': f'{self.avg_rewards_bat_list[-1]}',
-                'avg_energy': f'{self.avg_rewards_energy_list[-1]}',
-                'end_of_data': 'False' if i + 1 < self.time_slots else 'True'
-            }
-            self.socket.emit("PPO", data, broadcast=True)
             if dones:
                 self.env.reset()
-            # env.render()
+
+        return {
+            'avg_total': [float(item) for item in self.avg_rewards],
+            'avg_delay': [float(item) for item in self.avg_rewards_time_list],
+            'avg_backup': [float(item) for item in self.avg_rewards_bak_list],
+            'avg_battery': [float(item) for item in self.avg_rewards_bat_list],
+            'avg_energy': [float(item) for item in self.avg_rewards_energy_list],
+        }
+
+
+
