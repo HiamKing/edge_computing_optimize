@@ -18,7 +18,7 @@ class PPO2Algorithm:
                  time_steps_per_episode: str, train_time_slots: str, verbose: str,
                  random_seed: str) -> None:
         self.time_slots = int(time_slots)
-        self.timeslot_duration = float(timeslot_duration)
+        self.timeslot_duration = float(int(timeslot_duration)/60)
         self.time_steps_per_episode = int(time_steps_per_episode)
         self.max_number_of_server = int(max_number_of_server)
         self.server_service_rate = int(server_service_rate)
@@ -100,6 +100,3 @@ class PPO2Algorithm:
             'avg_battery': [float(item) for item in self.avg_rewards_bat_list],
             'avg_energy': [float(item) for item in self.avg_rewards_energy_list],
         }
-
-
-

@@ -2,6 +2,9 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from algorithms.ppo2 import PPO2Algorithm
 from algorithms.dqn import DQNAlgorithm
+from algorithms.a2c import A2CAlgorithm
+from algorithms.sac import SACAlgorithm
+from algorithms.trpo import TRPOAlgorithm
 import json
 
 app = Flask(__name__)
@@ -10,7 +13,10 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 ALGORITHM_MP = {
     'PPO': PPO2Algorithm,
-    'DQN': DQNAlgorithm
+    'DQN': DQNAlgorithm,
+    'A2C': A2CAlgorithm,
+    'SAC': SACAlgorithm,
+    'TRPO': TRPOAlgorithm,
 }
 
 

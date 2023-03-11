@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useState } from 'react';
 import { Multiselect } from 'react-widgets';
 import { algorithms } from '../DetailAlgorithm/algorithms';
 import ParamRenderer from '../DetailAlgorithm/paramRenderer';
@@ -8,9 +7,6 @@ import { useAlgoParams } from '../DetailAlgorithm';
 import APIS from '../../services/common';
 import 'react-widgets/scss/styles.scss';
 import '../DetailAlgorithm/styles.scss';
-
-const SOCKET_SERVER = 'http://127.0.0.1:5000/';
-const MAX_RESULT_ATTR_LENGTH = 5;
 
 export default function Overview() {
     const [algorithmName, setAlgorithmName] = useState([]);

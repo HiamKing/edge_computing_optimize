@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useState } from 'react';
 import DropdownList from 'react-widgets/DropdownList';
 import { algorithms } from './algorithms';
 import ParamRenderer from './paramRenderer';
@@ -7,9 +6,6 @@ import ResultRenderer from './resultRenderer';
 import APIS from '../../services/common';
 import 'react-widgets/scss/styles.scss';
 import './styles.scss';
-
-const SOCKET_SERVER = 'http://127.0.0.1:5000/';
-const MAX_RESULT_ATTR_LENGTH = 5;
 
 function useAlgoParams(initParams) {
     const [params, setParams] = useState(initParams);

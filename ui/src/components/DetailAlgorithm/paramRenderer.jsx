@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { solid } from '@fortawesome/fontawesome-svg-core/import.macro'; // <-- import styles to be used
+import { algorithms } from './algorithms';
 
 function InputRenderer({ paramLabel, paramMapping, updateParams }) {
     const [param, setParam] = useState('');
@@ -19,6 +22,11 @@ function InputRenderer({ paramLabel, paramMapping, updateParams }) {
                     }}
                 />
             </div>
+            <FontAwesomeIcon
+                className="align-self-center ml-2"
+                title={algorithms.paramDescription[paramLabel]}
+                icon={solid('circle-info')}
+            />
         </div>
     );
 }
@@ -42,6 +50,11 @@ function RangeInputRenderer({ paramLabel, paramMapping, updateParams }) {
                         updateParams(paramMapping.low, event.target.value);
                     }}
                 />
+                <FontAwesomeIcon
+                    className="align-self-center ml-2"
+                    title={algorithms.paramDescription[paramLabel].low}
+                    icon={solid('circle-info')}
+                />
             </div>
             <div className="algo-range-input">
                 <input
@@ -52,6 +65,11 @@ function RangeInputRenderer({ paramLabel, paramMapping, updateParams }) {
                         setHighParam(event.target.value);
                         updateParams(paramMapping.high, event.target.value);
                     }}
+                />
+                <FontAwesomeIcon
+                    className="align-self-center ml-2"
+                    title={algorithms.paramDescription[paramLabel].high}
+                    icon={solid('circle-info')}
                 />
             </div>
         </div>
@@ -74,7 +92,7 @@ const paramRendererMp = {
     'Time steps per episode': InputRenderer,
     'Training time slots': InputRenderer,
     'Time slots': InputRenderer,
-    'Verbose': InputRenderer,
+    Verbose: InputRenderer,
     'Random seed': InputRenderer,
 };
 
