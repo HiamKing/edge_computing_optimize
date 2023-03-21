@@ -20,4 +20,4 @@ Here are the guide to start the software:
 6. Start UI by using the command:
     - REACT_APP_API_URL=http://127.0.0.1:5000 npm start
 
-*NOTE: When you install the dependencies for the server, you may encounter an error due to missing a package called libopenmpi-dev. You can install this package by the command `sudo apt install libopenmpi-dev`.
+*NOTE: When you run an algorithm, you may encounter an error due to missing a package called libopenmpi-dev. You can install this package by the command `sudo apt install libopenmpi-dev`.
