@@ -6,7 +6,7 @@ Here are the guide to start the software:
     - tar -xf node-v18.14.0.tar.gz
     - export PATH={path to your node dir}/bin:$PATH
 2. Create a Python virtual environment
-    - You can you conda or what ever you have to create a Python virtual environment (python version should be 3.7.16)
+    - You can use conda or what ever you have to create a Python virtual environment (python version should be 3.7.16)
 3. Install server dependencies. You can follow these steps:
     - Activate your Python virtual environment
     - cd server/
